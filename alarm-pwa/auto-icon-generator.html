@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+            text-align: center;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .preview {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .icon-preview {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Automatic Icon Generator for Alarm PWA</h1>
+    <div class="status" id="status">
+        <p>Click the button below to automatically generate and download all required icon files.</p>
+        <p><strong>Instructions:</strong></p>
+        <ol style="text-align: left; max-width: 500px; margin: 0 auto;">
+            <li>Click "Generate & Download All Icons"</li>
+            <li>Wait for all downloads to complete</li>
+            <li>Move the downloaded files to the "icons" folder</li>
+            <li>Your PWA will be ready to use!</li>
+        </ol>
+    </div>
+    
+    <button onclick="generateAllIcons()">Generate & Download All Icons</button>
+    
+    <div class="preview" id="preview"></div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Create rounded rectangle background
+            const radius = size * 0.2;
+            ctx.fillStyle = '#007AFF';
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Clock face
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size * 0.04;
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.4, size * 0.22, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Clock hands
+            ctx.lineCap = 'round';
+            ctx.lineWidth = size * 0.025;
+            
+            // Hour hand (pointing to 9)
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.4);
+            ctx.lineTo(size * 0.38, size * 0.4);
+            ctx.stroke();
+            
+            // Minute hand (pointing to 12)
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.4);
+            ctx.lineTo(size * 0.5, size * 0.25);
+            ctx.stroke();
+            
+            // Center dot
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.4, size * 0.02, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Alarm bell base
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size * 0.025;
+            ctx.beginPath();
+            const bellY = size * 0.7;
+            const bellRadius = size * 0.12;
+            ctx.arc(size * 0.5, bellY, bellRadius, 0.3, Math.PI - 0.3);
+            ctx.stroke();
+            
+            // Bell legs
+            ctx.beginPath();
+            ctx.moveTo(size * 0.38, bellY - bellRadius * 0.7);
+            ctx.lineTo(size * 0.35, bellY + bellRadius * 0.3);
+            ctx.moveTo(size * 0.62, bellY - bellRadius * 0.7);
+            ctx.lineTo(size * 0.65, bellY + bellRadius * 0.3);
+            ctx.stroke();
+            
+            // Bell clapper
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, bellY + bellRadius * 0.4, size * 0.015, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        function downloadIcon(size, dataUrl) {
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function generateAllIcons() {
+            const preview = document.getElementById('preview');
+            const status = document.getElementById('status');
+            
+            status.innerHTML = '<p>Generating icons... Please wait.</p>';
+            preview.innerHTML = '';
+            
+            let completed = 0;
+            
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const dataUrl = createIcon(size);
+                    
+                    // Create preview
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'icon-preview';
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    img.style.width = Math.min(size, 64) + 'px';
+                    img.style.height = Math.min(size, 64) + 'px';
+                    previewDiv.appendChild(img);
+                    previewDiv.appendChild(document.createElement('br'));
+                    previewDiv.appendChild(document.createTextNode(`${size}x${size}`));
+                    preview.appendChild(previewDiv);
+                    
+                    // Download
+                    downloadIcon(size, dataUrl);
+                    
+                    completed++;
+                    status.innerHTML = `<p>Generated ${completed} of ${sizes.length} icons...</p>`;
+                    
+                    if (completed === sizes.length) {
+                        status.innerHTML = `
+                            <p><strong>✅ All icons generated successfully!</strong></p>
+                            <p>Check your downloads folder for ${sizes.length} PNG files.</p>
+                            <p>Move these files to the "icons" folder in your alarm-pwa directory.</p>
+                        `;
+                    }
+                }, index * 500); // Stagger downloads
+            });
+        }
+        
+        // Auto-generate on page load for convenience
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                generateAllIcons();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

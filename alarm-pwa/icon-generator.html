@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .icon-preview {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .icon-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .icon-svg {
+            background: #007AFF;
+            border-radius: 20%;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Alarm App Icon Generator</h1>
+    <p>Click "Generate Icons" to create SVG icon files. You can then convert these to PNG using any online converter.</p>
+    
+    <button onclick="generateIcons()">Generate Icons</button>
+    <button onclick="downloadAllIcons()">Download All Icons</button>
+    
+    <div class="icon-preview" id="iconPreview"></div>
+    
+    <script>
+        const iconSizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function createSVGIcon(size) {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <rect width="${size}" height="${size}" rx="${size * 0.2}" fill="#007AFF"/>
+                <circle cx="${size * 0.5}" cy="${size * 0.4}" r="${size * 0.25}" fill="none" stroke="white" stroke-width="${size * 0.04}"/>
+                <line x1="${size * 0.5}" y1="${size * 0.2}" x2="${size * 0.5}" y2="${size * 0.4}" stroke="white" stroke-width="${size * 0.03}" stroke-linecap="round"/>
+                <line x1="${size * 0.5}" y1="${size * 0.4}" x2="${size * 0.6}" y2="${size * 0.5}" stroke="white" stroke-width="${size * 0.03}" stroke-linecap="round"/>
+                <path d="M ${size * 0.3} ${size * 0.65} Q ${size * 0.5} ${size * 0.8} ${size * 0.7} ${size * 0.65}" fill="none" stroke="white" stroke-width="${size * 0.03}" stroke-linecap="round"/>
+                <circle cx="${size * 0.35}" cy="${size * 0.7}" r="${size * 0.02}" fill="white"/>
+                <circle cx="${size * 0.65}" cy="${size * 0.7}" r="${size * 0.02}" fill="white"/>
+            </svg>`;
+            return svg;
+        }
+        
+        function generateIcons() {
+            const preview = document.getElementById('iconPreview');
+            preview.innerHTML = '';
+            
+            iconSizes.forEach(size => {
+                const svg = createSVGIcon(size);
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                iconItem.innerHTML = `
+                    <div class="icon-svg" style="width: ${Math.min(size, 128)}px; height: ${Math.min(size, 128)}px;">
+                        ${svg}
+                    </div>
+                    <div>${size}x${size}</div>
+                    <button onclick="downloadIcon(${size})">Download</button>
+                `;
+                preview.appendChild(iconItem);
+            });
+        }
+        
+        function downloadIcon(size) {
+            const svg = createSVGIcon(size);
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `icon-${size}x${size}.svg`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function downloadAllIcons() {
+            iconSizes.forEach(size => {
+                setTimeout(() => downloadIcon(size), size * 10);
+            });
+        }
+        
+        // Generate icons on page load
+        generateIcons();
+    </script>
+</body>
+</html>

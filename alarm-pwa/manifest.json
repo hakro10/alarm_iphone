@@ -1,0 +1,96 @@
+{
+    "name": "Alarm App",
+    "short_name": "Alarm",
+    "description": "A modern alarm app with Samsung and iOS inspired design",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#007AFF",
+    "orientation": "portrait-primary",
+    "categories": ["utilities", "productivity"],
+    "lang": "en-US",
+    "icons": [
+        {
+            "src": "icons/icon-72x72.svg",
+            "sizes": "72x72",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-96x96.svg",
+            "sizes": "96x96",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-128x128.svg",
+            "sizes": "128x128",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-144x144.svg",
+            "sizes": "144x144",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-152x152.svg",
+            "sizes": "152x152",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-192x192.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-384x384.svg",
+            "sizes": "384x384",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "icons/icon-512x512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "screenshots/screenshot1.png",
+            "type": "image/png",
+            "sizes": "540x720"
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "Add Alarm",
+            "short_name": "Add",
+            "description": "Quickly add a new alarm",
+            "url": "/?action=add",
+            "icons": [
+                {
+                    "src": "icons/icon-192x192.svg",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        }
+    ],
+    "permissions": [
+        "notifications",
+        "background-sync",
+        "persistent-storage"
+    ],
+    "features": [
+        "Cross Platform",
+        "fast",
+        "simple"
+    ]
+}
