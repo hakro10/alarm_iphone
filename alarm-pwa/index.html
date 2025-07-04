@@ -18,10 +18,9 @@
         <!-- Header -->
         <header class="header">
             <h1 class="header-title">Alarm</h1>
-            <button class="add-alarm-btn" onclick="showAddAlarmModal()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
+            <button class="add-alarm-btn">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14m-7-7h14"/>
                 </svg>
             </button>
         </header>
@@ -43,9 +42,9 @@
         <div id="alarm-modal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button class="modal-close" onclick="closeModal()">Cancel</button>
+                    <button class="modal-close">Cancel</button>
                     <h2 class="modal-title">Add Alarm</h2>
-                    <button class="modal-save" onclick="saveAlarm()">Save</button>
+                    <button class="modal-save">Save</button>
                 </div>
                 
                 <div class="modal-body">
@@ -93,12 +92,12 @@
             <div class="modal-content time-remaining-content">
                 <div class="time-remaining-header">
                     <h3>Alarm in</h3>
-                    <button class="modal-close" onclick="closeTimeRemainingModal()">×</button>
+                    <button class="modal-close">×</button>
                 </div>
                 <div class="time-remaining-display">
                     <div id="time-remaining-text" class="time-remaining-text"></div>
                 </div>
-                <button class="ok-btn" onclick="closeTimeRemainingModal()">OK</button>
+                <button class="ok-btn">OK</button>
             </div>
         </div>
 
@@ -109,8 +108,8 @@
                 <div class="active-alarm-time"></div>
                 <div class="active-alarm-label"></div>
                 <div class="alarm-actions">
-                    <button class="snooze-btn" onclick="snoozeAlarm()">Snooze</button>
-                    <button class="stop-btn" onclick="stopAlarm()">Stop</button>
+                    <button class="snooze-btn">Snooze</button>
+                    <button class="stop-btn">Stop</button>
                 </div>
             </div>
         </div>

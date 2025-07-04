@@ -17,39 +17,26 @@ class AlarmApp {
     }
     
     async init() {
-        // Initialize audio context
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Load alarms from localStorage
         this.loadAlarms();
-        
-        // Request notification permission
         await this.requestNotificationPermission();
-        
-        // Register service worker
         await this.registerServiceWorker();
-        
-        // Render alarms
         this.renderAlarms();
-        
-        // Schedule existing alarms
         this.scheduleAllAlarms();
-        
-        // Check for missed alarms
         this.checkMissedAlarms();
-        
-        // Set up interval to check alarms
         setInterval(() => this.checkAlarms(), 1000);
-        
-        // Set up day change detection
         this.setupDayChangeDetection();
-        
-        // Add event listeners
         this.setupEventListeners();
     }
     
     setupEventListeners() {
-        // Day buttons in modal
+        document.querySelector('.add-alarm-btn').addEventListener('click', () => this.showModal());
+        document.querySelector('.modal-close').addEventListener('click', () => this.closeModal());
+        document.querySelector('.modal-save').addEventListener('click', () => this.saveAlarm());
+        document.querySelector('.ok-btn').addEventListener('click', () => this.closeTimeRemainingModal());
+        document.querySelector('.snooze-btn').addEventListener('click', () => this.snoozeAlarm());
+        document.querySelector('.stop-btn').addEventListener('click', () => this.stopAlarm());
+
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -57,15 +44,27 @@ class AlarmApp {
             });
         });
         
-        // Time input change
         document.getElementById('alarm-time').addEventListener('change', () => {
             this.updateTimeRemaining();
         });
         
-        // Prevent form submission
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && e.target.closest('.modal')) {
                 e.preventDefault();
+            }
+        });
+
+        document.getElementById('alarms-container').addEventListener('click', (e) => {
+            const target = e.target;
+            const alarmItem = target.closest('.alarm-item');
+            if (!alarmItem) return;
+
+            const alarmId = alarmItem.dataset.id;
+
+            if (target.classList.contains('alarm-toggle')) {
+                this.toggleAlarm(alarmId);
+            } else if (target.classList.contains('alarm-menu-btn')) {
+                this.editAlarm(alarmId);
             }
         });
     }
@@ -80,8 +79,7 @@ class AlarmApp {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('sw.js');
-                console.log('Service Worker registered:', registration);
+                await navigator.serviceWorker.register('sw.js');
             } catch (error) {
                 console.error('Service Worker registration failed:', error);
             }
@@ -92,7 +90,6 @@ class AlarmApp {
         const saved = localStorage.getItem('alarms');
         if (saved) {
             this.alarms = JSON.parse(saved);
-            // Convert string dates back to Date objects
             this.alarms.forEach(alarm => {
                 if (alarm.nextTrigger) {
                     alarm.nextTrigger = new Date(alarm.nextTrigger);
@@ -133,9 +130,8 @@ class AlarmApp {
                         <div class="alarm-schedule">${scheduleStr}</div>
                     </div>
                     <div class="alarm-actions">
-                        <button class="alarm-toggle ${alarm.enabled ? 'active' : ''}" 
-                                onclick="alarmApp.toggleAlarm('${alarm.id}')"></button>
-                        <button class="alarm-menu-btn" onclick="alarmApp.editAlarm('${alarm.id}')">
+                        <button class="alarm-toggle ${alarm.enabled ? 'active' : ''}"></button>
+                        <button class="alarm-menu-btn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 5v14M5 12h14"/>
                             </svg>
@@ -165,12 +161,10 @@ class AlarmApp {
         if (alarm.repeatDays.length === 7) {
             return 'Every day';
         } else if (alarm.repeatDays.length === 5 && 
-                   alarm.repeatDays.includes(1) && alarm.repeatDays.includes(2) && 
-                   alarm.repeatDays.includes(3) && alarm.repeatDays.includes(4) && 
-                   alarm.repeatDays.includes(5)) {
+                   alarm.repeatDays.every(day => [1,2,3,4,5].includes(day))) {
             return 'Weekdays';
         } else if (alarm.repeatDays.length === 2 && 
-                   alarm.repeatDays.includes(0) && alarm.repeatDays.includes(6)) {
+                   alarm.repeatDays.every(day => [0,6].includes(day))) {
             return 'Weekends';
         } else {
             return selectedDays.join(', ');
@@ -201,7 +195,7 @@ class AlarmApp {
     }
     
     deleteAlarm(id) {
-        if (confirm('Delete this alarm?')) {
+        this.showConfirmModal('Delete this alarm?', () => {
             const index = this.alarms.findIndex(a => a.id === id);
             if (index > -1) {
                 this.cancelAlarm(this.alarms[index]);
@@ -209,7 +203,7 @@ class AlarmApp {
                 this.saveAlarms();
                 this.renderAlarms();
             }
-        }
+        });
     }
     
     populateModal(alarm) {
@@ -217,12 +211,10 @@ class AlarmApp {
         document.getElementById('alarm-label').value = alarm.label;
         document.getElementById('alarm-sound').value = alarm.sound;
         
-        // Reset day buttons
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         
-        // Set repeat days
         if (alarm.repeatDays) {
             alarm.repeatDays.forEach(day => {
                 const btn = document.querySelector(`[data-day="${day}"]`);
@@ -235,7 +227,6 @@ class AlarmApp {
         document.querySelector('.modal-title').textContent = title;
         document.getElementById('alarm-modal').classList.add('show');
         
-        // Set default time if adding new alarm
         if (!this.currentEditingAlarm) {
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -312,12 +303,10 @@ class AlarmApp {
         };
         
         if (this.currentEditingAlarm) {
-            // Update existing alarm
             const index = this.alarms.findIndex(a => a.id === this.currentEditingAlarm.id);
             this.cancelAlarm(this.alarms[index]);
             this.alarms[index] = alarmData;
         } else {
-            // Add new alarm
             this.alarms.push(alarmData);
         }
         
@@ -326,7 +315,6 @@ class AlarmApp {
         this.renderAlarms();
         this.closeModal();
         
-        // Show time remaining modal
         this.showTimeRemainingModal();
     }
     
@@ -342,10 +330,6 @@ class AlarmApp {
     scheduleAlarm(alarm) {
         const nextTrigger = this.getNextTriggerTime(alarm);
         alarm.nextTrigger = nextTrigger;
-        
-        console.log(`Alarm scheduled for: ${nextTrigger}`);
-        
-        // Schedule notification
         this.scheduleNotification(alarm);
     }
     
@@ -356,12 +340,10 @@ class AlarmApp {
         nextTrigger.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         
         if (!alarm.repeatDays || alarm.repeatDays.length === 0) {
-            // One-time alarm
             if (nextTrigger <= now) {
                 nextTrigger.setDate(nextTrigger.getDate() + 1);
             }
         } else {
-            // Repeating alarm
             const currentDay = now.getDay();
             const currentTime = now.getHours() * 60 + now.getMinutes();
             const alarmTime = parseInt(hours) * 60 + parseInt(minutes);
@@ -369,12 +351,10 @@ class AlarmApp {
             let daysToAdd = 0;
             let found = false;
             
-            // Check if alarm should trigger today
             if (alarm.repeatDays.includes(currentDay) && alarmTime > currentTime) {
                 found = true;
             }
             
-            // Look for next day
             if (!found) {
                 for (let i = 1; i <= 7; i++) {
                     const checkDay = (currentDay + i) % 7;
@@ -398,7 +378,6 @@ class AlarmApp {
         const delay = alarm.nextTrigger - new Date();
         if (delay <= 0) return;
         
-        // Cancel existing timeout
         if (alarm.timeoutId) {
             clearTimeout(alarm.timeoutId);
         }
@@ -427,22 +406,13 @@ class AlarmApp {
     }
     
     triggerAlarm(alarm) {
-        console.log('Triggering alarm:', alarm.label);
-        
-        // Show alarm modal
         this.showActiveAlarmModal(alarm);
-        
-        // Play sound
         this.playAlarmSound(alarm.sound);
-        
-        // Show notification
         this.showNotification(alarm);
         
-        // Schedule next occurrence if repeating
         if (alarm.repeatDays && alarm.repeatDays.length > 0) {
             this.scheduleAlarm(alarm);
         } else {
-            // One-time alarm - disable it
             alarm.enabled = false;
             this.saveAlarms();
             this.renderAlarms();
@@ -454,7 +424,6 @@ class AlarmApp {
         document.querySelector('.active-alarm-label').textContent = alarm.label;
         document.getElementById('active-alarm-modal').classList.add('show');
         
-        // Store current alarm for snooze/stop actions
         this.currentActiveAlarm = alarm;
     }
     
@@ -466,7 +435,6 @@ class AlarmApp {
         const soundGenerator = this.sounds[soundType] || this.sounds.default;
         this.currentAlarmAudio = soundGenerator();
         
-        // Play for 30 seconds or until stopped
         setTimeout(() => {
             if (this.currentAlarmAudio) {
                 this.currentAlarmAudio.stop();
@@ -492,9 +460,7 @@ class AlarmApp {
             stop: () => {
                 try {
                     oscillator.stop();
-                } catch (e) {
-                    // Oscillator already stopped
-                }
+                } catch (e) {}
             }
         };
     }
@@ -518,9 +484,7 @@ class AlarmApp {
             stop: () => {
                 try {
                     oscillator.stop();
-                } catch (e) {
-                    // Oscillator already stopped
-                }
+                } catch (e) {}
             }
         };
     }
@@ -543,9 +507,7 @@ class AlarmApp {
             stop: () => {
                 try {
                     oscillator.stop();
-                } catch (e) {
-                    // Oscillator already stopped
-                }
+                } catch (e) {}
             }
         };
     }
@@ -573,7 +535,6 @@ class AlarmApp {
         
         document.getElementById('active-alarm-modal').classList.remove('show');
         
-        // Schedule snooze (5 minutes)
         if (this.currentActiveAlarm) {
             const snoozeTime = new Date();
             snoozeTime.setMinutes(snoozeTime.getMinutes() + 5);
@@ -604,21 +565,17 @@ class AlarmApp {
         
         this.alarms.forEach(alarm => {
             if (alarm.enabled && alarm.nextTrigger && now > alarm.nextTrigger) {
-                // Reschedule missed alarm
                 this.scheduleAlarm(alarm);
             }
         });
     }
     
     setupDayChangeDetection() {
-        // Check for day change every minute
         setInterval(() => {
             const now = new Date();
             const lastCheck = this.lastDayCheck || now;
             
             if (now.getDate() !== lastCheck.getDate()) {
-                // Day changed, reschedule all alarms
-                console.log('Day changed, rescheduling alarms');
                 this.scheduleAllAlarms();
                 this.saveAlarms();
                 this.renderAlarms();
@@ -627,58 +584,33 @@ class AlarmApp {
             this.lastDayCheck = now;
         }, 60000);
     }
-}
 
-// Global functions for HTML onclick handlers
-function showAddAlarmModal() {
-    alarmApp.showModal();
-}
+    showConfirmModal(message, onConfirm) {
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-body" style="text-align: center;">
+                    <p>${message}</p>
+                    <div style="margin-top: 20px;">
+                        <button class="ok-btn" id="confirm-yes">Yes</button>
+                        <button class="modal-close" id="confirm-no" style="background: #333; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer;">No</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
 
-function closeModal() {
-    alarmApp.closeModal();
+        document.getElementById('confirm-yes').onclick = () => {
+            onConfirm();
+            document.body.removeChild(modal);
+        };
+        document.getElementById('confirm-no').onclick = () => {
+            document.body.removeChild(modal);
+        };
+    }
 }
-
-function saveAlarm() {
-    alarmApp.saveAlarm();
-}
-
-function closeTimeRemainingModal() {
-    alarmApp.closeTimeRemainingModal();
-}
-
-function snoozeAlarm() {
-    alarmApp.snoozeAlarm();
-}
-
-function stopAlarm() {
-    alarmApp.stopAlarm();
-}
-
-// Initialize app
-let alarmApp;
 
 document.addEventListener('DOMContentLoaded', () => {
-    alarmApp = new AlarmApp();
-});
-
-// Handle visibility change
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && alarmApp) {
-        // App became visible, check for alarms
-        alarmApp.checkAlarms();
-    }
-});
-
-// Handle page focus
-window.addEventListener('focus', () => {
-    if (alarmApp) {
-        alarmApp.checkAlarms();
-    }
-});
-
-// Handle beforeunload
-window.addEventListener('beforeunload', () => {
-    if (alarmApp) {
-        alarmApp.saveAlarms();
-    }
+    new AlarmApp();
 });

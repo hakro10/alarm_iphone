@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alarm-pwa-v1';
+const CACHE_NAME = 'alarm-pwa-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -9,134 +9,40 @@ const urlsToCache = [
     '/icons/icon-512x512.svg'
 ];
 
-// Install event - cache resources
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('Opened cache');
                 return cache.addAll(urlsToCache);
             })
     );
 });
 
-// Fetch event - serve from cache
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Return cached version or fetch from network
-                return response || fetch(event.request);
-            })
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.match(event.request).then(response => {
+                const fetchPromise = fetch(event.request).then(networkResponse => {
+                    cache.put(event.request, networkResponse.clone());
+                    return networkResponse;
+                });
+                return response || fetchPromise;
+            });
+        })
     );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', event => {
+    const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
                         return caches.delete(cacheName);
                     }
                 })
             );
         })
     );
-});
-
-// Background sync for alarms
-self.addEventListener('sync', event => {
-    if (event.tag === 'alarm-check') {
-        event.waitUntil(checkAlarms());
-    }
-});
-
-// Push notification handler
-self.addEventListener('push', event => {
-    const options = {
-        body: event.data ? event.data.text() : 'Alarm notification',
-        icon: 'icons/icon-192x192.svg',
-        badge: 'icons/icon-192x192.svg',
-        vibrate: [200, 100, 200, 100, 200, 100, 200],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        },
-        actions: [
-            {
-                action: 'snooze',
-                title: 'Snooze',
-                icon: 'icons/icon-192x192.svg'
-            },
-            {
-                action: 'stop',
-                title: 'Stop',
-                icon: 'icons/icon-192x192.svg'
-            }
-        ]
-    };
-
-    event.waitUntil(
-        self.registration.showNotification('Alarm', options)
-    );
-});
-
-// Notification click handler
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    
-    if (event.action === 'snooze') {
-        // Handle snooze action
-        console.log('Snooze clicked');
-        // Could send message to main app
-    } else if (event.action === 'stop') {
-        // Handle stop action
-        console.log('Stop clicked');
-        // Could send message to main app
-    } else {
-        // Default action - open the app
-        event.waitUntil(
-            clients.openWindow('/')
-        );
-    }
-});
-
-// Message handler for communication with main app
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SCHEDULE_ALARM') {
-        console.log('Scheduling alarm from service worker');
-        // Handle alarm scheduling
-    }
-});
-
-// Background task for checking alarms
-async function checkAlarms() {
-    try {
-        // Get alarms from IndexedDB or communicate with main app
-        const clients = await self.clients.matchAll();
-        
-        if (clients.length > 0) {
-            // Send message to main app to check alarms
-            clients[0].postMessage({
-                type: 'CHECK_ALARMS'
-            });
-        }
-    } catch (error) {
-        console.error('Error checking alarms:', error);
-    }
-}
-
-// Periodic background sync (if supported)
-self.addEventListener('periodicsync', event => {
-    if (event.tag === 'alarm-check') {
-        event.waitUntil(checkAlarms());
-    }
-});
-
-// Handle notification close
-self.addEventListener('notificationclose', event => {
-    console.log('Notification closed:', event.notification.data);
 });
