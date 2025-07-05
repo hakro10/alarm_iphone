@@ -62,12 +62,16 @@
                         
                         <div class="option-item">
                             <label for="alarm-sound">Sound</label>
-                            <select id="alarm-sound" class="select-input">
-                                <option value="default">Default</option>
-                                <option value="gentle">Gentle</option>
-                                <option value="loud">Loud</option>
-                                <option value="beep">Beep</option>
-                            </select>
+                            <div class="sound-select-container">
+                                <select id="alarm-sound" class="select-input">
+                                    <option value="default">Default</option>
+                                    <option value="gentle">Gentle</option>
+                                    <option value="loud">Loud</option>
+                                    <option value="beep">Beep</option>
+                                </select>
+                                <button id="upload-sound-btn" class="upload-btn">Upload</button>
+                                <input type="file" id="sound-upload-input" accept="audio/*" style="display: none;">
+                            </div>
                         </div>
                         
                         <div class="option-item">

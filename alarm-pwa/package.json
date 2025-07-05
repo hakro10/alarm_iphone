@@ -1,0 +1,9 @@
+{
+  "name": "alarm-pwa-icon-converter",
+  "version": "1.0.0",
+  "description": "A script to convert SVG icons to PNG for the Alarm PWA.",
+  "main": "convert-icons.js",
+  "dependencies": {
+    "sharp": "^0.32.6"
+  }
+}

@@ -19,6 +19,7 @@ class AlarmApp {
     async init() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.loadAlarms();
+        this.loadCustomSounds();
         await this.requestNotificationPermission();
         await this.registerServiceWorker();
         this.renderAlarms();
@@ -52,6 +53,14 @@ class AlarmApp {
             if (e.key === 'Enter' && e.target.closest('.modal')) {
                 e.preventDefault();
             }
+        });
+
+        document.getElementById('upload-sound-btn').addEventListener('click', () => {
+            document.getElementById('sound-upload-input').click();
+        });
+
+        document.getElementById('sound-upload-input').addEventListener('change', (e) => {
+            this.handleSoundUpload(e.target.files[0]);
         });
 
         document.getElementById('alarms-container').addEventListener('click', (e) => {
@@ -431,10 +440,25 @@ class AlarmApp {
         if (this.currentAlarmAudio) {
             this.currentAlarmAudio.stop();
         }
-        
-        const soundGenerator = this.sounds[soundType] || this.sounds.default;
-        this.currentAlarmAudio = soundGenerator();
-        
+
+        if (soundType.startsWith('custom_')) {
+            const soundName = soundType.replace('custom_', '');
+            const soundData = localStorage.getItem(`custom_sound_${soundName}`);
+            if (soundData) {
+                const audio = new Audio(soundData);
+                audio.play();
+                this.currentAlarmAudio = {
+                    stop: () => audio.pause()
+                };
+            } else {
+                // Fallback to default if custom sound not found
+                this.currentAlarmAudio = this.sounds.default();
+            }
+        } else {
+            const soundGenerator = this.sounds[soundType] || this.sounds.default;
+            this.currentAlarmAudio = soundGenerator();
+        }
+
         setTimeout(() => {
             if (this.currentAlarmAudio) {
                 this.currentAlarmAudio.stop();
@@ -550,6 +574,43 @@ class AlarmApp {
         
         document.getElementById('active-alarm-modal').classList.remove('show');
         this.currentActiveAlarm = null;
+    }
+
+    handleSoundUpload(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const soundName = file.name;
+            const soundData = e.target.result;
+
+            try {
+                localStorage.setItem(`custom_sound_${soundName}`, soundData);
+                this.addCustomSoundToSelect(soundName);
+            } catch (error) {
+                console.error('Error saving sound to local storage:', error);
+                alert('Could not save sound. Storage may be full.');
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    addCustomSoundToSelect(soundName) {
+        const select = document.getElementById('alarm-sound');
+        const option = document.createElement('option');
+        option.value = `custom_${soundName}`;
+        option.textContent = soundName;
+        select.appendChild(option);
+    }
+
+    loadCustomSounds() {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('custom_sound_')) {
+                const soundName = key.replace('custom_sound_', '');
+                this.addCustomSoundToSelect(soundName);
+            }
+        }
     }
     
     scheduleAllAlarms() {
