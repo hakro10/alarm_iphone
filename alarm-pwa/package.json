@@ -1,9 +1,13 @@
 {
-  "name": "alarm-pwa-icon-converter",
+  "name": "alarm-pwa",
   "version": "1.0.0",
-  "description": "A script to convert SVG icons to PNG for the Alarm PWA.",
-  "main": "convert-icons.js",
-  "dependencies": {
-    "sharp": "^0.32.6"
+  "description": "A modern Progressive Web App (PWA) alarm clock inspired by Samsung and iOS alarm designs.",
+  "main": "js/app.js",
+  "scripts": {
+    "start": "http-server -p 8000"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }
