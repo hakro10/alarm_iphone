@@ -1,6 +1,6 @@
-
 # Dependencies
-/node_modules
+node_modules/
+*.bak
 
 # Build artifacts
 /dist
@@ -18,8 +18,13 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Package files (not needed for static site)
+package.json
+package-lock.json
+
 # IDEs and editors
 .idea/
 .vscode/
 *.swp
 *~
+.DS_Store
