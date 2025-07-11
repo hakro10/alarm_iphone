@@ -110,6 +110,7 @@ This is a well-structured PWA alarm clock application with modern web technologi
 3. **✅ Enhanced User Experience**:
    - Added alarm duplication feature
    - Added action sheet for alarm management
+   - **Fixed time remaining popup for alarm toggles**
    - Improved error handling and fallbacks
 
 4. **✅ Code Quality Improvements**:
@@ -117,7 +118,13 @@ This is a well-structured PWA alarm clock application with modern web technologi
    - Improved code organization
    - Added missing method implementations
 
-5. **📋 Comprehensive Analysis**: 
+5. **✅ Bug Fixes**:
+   - **Fixed time remaining popup not showing when toggling existing alarms on**
+   - Added `showTimeRemainingModalForAlarm()` method
+   - Added `updateTimeRemainingForAlarm()` method
+   - Time remaining popup now shows for both new alarms and toggled alarms
+
+6. **📋 Comprehensive Analysis**: 
    - Reviewed all application files
    - Identified remaining issues
    - Provided implementation roadmap

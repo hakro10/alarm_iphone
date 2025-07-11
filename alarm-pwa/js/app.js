@@ -198,6 +198,8 @@ class AlarmApp {
             alarm.enabled = !alarm.enabled;
             if (alarm.enabled) {
                 this.scheduleAlarm(alarm);
+                // Show time remaining popup when alarm is turned on
+                this.showTimeRemainingModalForAlarm(alarm);
             } else {
                 this.cancelAlarm(alarm);
             }
@@ -301,6 +303,30 @@ class AlarmApp {
         document.getElementById('time-remaining-text').textContent = timeText;
     }
     
+    updateTimeRemainingForAlarm(alarm) {
+        if (!alarm.nextTrigger) return;
+        
+        const now = new Date();
+        const timeDiff = alarm.nextTrigger - now;
+        
+        if (timeDiff <= 0) {
+            document.getElementById('time-remaining-text').textContent = 'Alarm time has passed';
+            return;
+        }
+        
+        const hours_remaining = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutes_remaining = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        let timeText = '';
+        if (hours_remaining > 0) {
+            timeText = `${hours_remaining} hour${hours_remaining > 1 ? 's' : ''} and ${minutes_remaining} minute${minutes_remaining > 1 ? 's' : ''}`;
+        } else {
+            timeText = `${minutes_remaining} minute${minutes_remaining > 1 ? 's' : ''}`;
+        }
+        
+        document.getElementById('time-remaining-text').textContent = timeText;
+    }
+    
     saveAlarm() {
         const time = document.getElementById('alarm-time').value;
         const label = document.getElementById('alarm-label').value || 'Alarm';
@@ -341,6 +367,11 @@ class AlarmApp {
     
     showTimeRemainingModal() {
         this.updateTimeRemaining();
+        document.getElementById('time-remaining-modal').classList.add('show');
+    }
+    
+    showTimeRemainingModalForAlarm(alarm) {
+        this.updateTimeRemainingForAlarm(alarm);
         document.getElementById('time-remaining-modal').classList.add('show');
     }
     
