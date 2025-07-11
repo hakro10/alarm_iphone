@@ -78,11 +78,16 @@ class AlarmApp {
             if (!alarmItem) return;
 
             const alarmId = alarmItem.dataset.id;
+            
+            console.log('Click detected:', target.className, target.tagName);
+            console.log('Target element:', target);
+            console.log('Closest menu btn:', target.closest('.alarm-menu-btn'));
 
             if (target.classList.contains('alarm-toggle')) {
                 this.initializeAudioContext();
                 this.toggleAlarm(alarmId);
-            } else if (target.classList.contains('alarm-menu-btn')) {
+            } else if (target.classList.contains('alarm-menu-btn') || target.closest('.alarm-menu-btn')) {
+                console.log('Menu button clicked, showing options for alarm:', alarmId);
                 this.showAlarmOptions(alarmId);
             }
         });
@@ -712,33 +717,140 @@ class AlarmApp {
     }
     
     showActionSheet(options) {
+        // Remove any existing action sheets
+        const existingActionSheet = document.querySelector('.simple-action-sheet');
+        if (existingActionSheet) {
+            document.body.removeChild(existingActionSheet);
+        }
+
         const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content action-sheet">
-                <div class="action-sheet-options">
-                    ${options.map(option => `
-                        <button class="action-option" data-action="${option.text}">${option.text}</button>
-                    `).join('')}
-                    <button class="action-option action-cancel">Cancel</button>
-                </div>
-            </div>
+        modal.className = 'simple-action-sheet';
+        
+        // Apply inline styles to bypass CSS issues
+        modal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.6) !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding: 20px !important;
+            box-sizing: border-box !important;
         `;
         
+        const container = document.createElement('div');
+        container.style.cssText = `
+            background: #2C2C2E !important;
+            border-radius: 16px !important;
+            width: 100% !important;
+            max-width: 300px !important;
+            overflow: hidden !important;
+            animation: slideUp 0.2s ease-out !important;
+        `;
+        
+        // Create action buttons
+        options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.textContent = option.text;
+            button.style.cssText = `
+                display: block !important;
+                width: 100% !important;
+                padding: 18px 20px !important;
+                background: #2C2C2E !important;
+                color: #FFFFFF !important;
+                border: none !important;
+                border-bottom: ${index < options.length - 1 ? '1px solid #38383A' : 'none'} !important;
+                font-size: 16px !important;
+                font-weight: 500 !important;
+                text-align: left !important;
+                cursor: pointer !important;
+                outline: none !important;
+                transition: background-color 0.2s !important;
+            `;
+            
+            button.addEventListener('mouseenter', () => {
+                button.style.background = 'rgba(255, 255, 255, 0.1) !important';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.background = '#2C2C2E !important';
+            });
+            
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                try {
+                    option.action();
+                } catch (error) {
+                    console.error('Action failed:', error);
+                }
+                closeActionSheet();
+            });
+            
+            container.appendChild(button);
+        });
+        
+        // Create cancel button
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = 'Cancel';
+        cancelButton.style.cssText = `
+            display: block !important;
+            width: 100% !important;
+            padding: 18px 20px !important;
+            background: #1C1C1E !important;
+            color: #99999D !important;
+            border: none !important;
+            border-radius: 16px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            outline: none !important;
+            margin-top: 8px !important;
+            transition: background-color 0.2s !important;
+        `;
+        
+        cancelButton.addEventListener('mouseenter', () => {
+            cancelButton.style.background = 'rgba(255, 255, 255, 0.05) !important';
+        });
+        
+        cancelButton.addEventListener('mouseleave', () => {
+            cancelButton.style.background = '#1C1C1E !important';
+        });
+        
+        cancelButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeActionSheet();
+        });
+        
+        container.appendChild(cancelButton);
+        modal.appendChild(container);
         document.body.appendChild(modal);
         
-        modal.addEventListener('click', (e) => {
-            if (e.target.classList.contains('action-option')) {
-                const action = e.target.dataset.action;
-                const option = options.find(o => o.text === action);
-                if (option) {
-                    option.action();
-                }
-                document.body.removeChild(modal);
-            } else if (e.target.classList.contains('action-cancel') || e.target === modal) {
+        const closeActionSheet = () => {
+            if (document.body.contains(modal)) {
                 document.body.removeChild(modal);
             }
+            document.removeEventListener('keydown', handleEscape);
+        };
+        
+        // Close when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeActionSheet();
+            }
         });
+        
+        // Close on escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeActionSheet();
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
     }
     
     setupDayChangeDetection() {
