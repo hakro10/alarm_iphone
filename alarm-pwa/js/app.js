@@ -23,7 +23,6 @@ class AlarmApp {
     async init() {
         this.loadAlarms();
         this.loadCustomSounds();
-        await this.requestNotificationPermission();
         await this.registerServiceWorker();
         this.setupVisibilityHandling();
         this.setupWakeLock();
@@ -37,8 +36,31 @@ class AlarmApp {
     }
     
     setupEventListeners() {
-        document.querySelector('.add-alarm-btn').addEventListener('click', () => {
+        const addAlarmBtn = document.querySelector('.add-alarm-btn');
+        console.log('Add alarm button found:', addAlarmBtn);
+        
+        addAlarmBtn.addEventListener('click', (e) => {
+            console.log('Add alarm button clicked!', e);
+            e.preventDefault();
+            e.stopPropagation();
             this.initializeAudioContext();
+            // Request notification permission synchronously within the user event
+            this.requestNotificationPermission();
+            this.showModal();
+        });
+        
+        // Also add touch event handlers for better mobile support
+        addAlarmBtn.addEventListener('touchstart', (e) => {
+            console.log('Touch start on add alarm button');
+            e.preventDefault();
+        });
+        
+        addAlarmBtn.addEventListener('touchend', (e) => {
+            console.log('Touch end on add alarm button');
+            e.preventDefault();
+            e.stopPropagation();
+            this.initializeAudioContext();
+            this.requestNotificationPermission();
             this.showModal();
         });
         document.querySelector('.modal-close').addEventListener('click', () => this.closeModal());
@@ -78,20 +100,25 @@ class AlarmApp {
             if (!alarmItem) return;
 
             const alarmId = alarmItem.dataset.id;
+            console.log('Clicked target:', target, 'Classes:', target.classList.toString());
 
             if (target.classList.contains('alarm-toggle')) {
                 this.initializeAudioContext();
                 this.toggleAlarm(alarmId);
-            } else if (target.classList.contains('alarm-menu-btn')) {
+            } else if (target.classList.contains('alarm-menu-btn') || target.closest('.alarm-menu-btn')) {
+                console.log('Menu button clicked for alarm:', alarmId);
                 this.showAlarmOptions(alarmId);
             }
         });
     }
     
-    async requestNotificationPermission() {
-        if ('Notification' in window) {
-            const permission = await Notification.requestPermission();
-            this.notificationPermission = permission === 'granted';
+    requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                this.notificationPermission = permission === 'granted';
+            });
+        } else if (Notification.permission === 'granted') {
+            this.notificationPermission = true;
         }
     }
     
@@ -197,7 +224,9 @@ class AlarmApp {
         if (alarm) {
             alarm.enabled = !alarm.enabled;
             if (alarm.enabled) {
+                console.log('Toggling alarm on:', alarm.time);
                 this.scheduleAlarm(alarm);
+                console.log('After scheduling, nextTrigger:', alarm.nextTrigger);
                 // Show time remaining popup when alarm is turned on
                 this.showTimeRemainingModalForAlarm(alarm);
             } else {
@@ -304,10 +333,15 @@ class AlarmApp {
     }
     
     updateTimeRemainingForAlarm(alarm) {
-        if (!alarm.nextTrigger) return;
+        console.log('updateTimeRemainingForAlarm called with:', alarm.time, 'nextTrigger:', alarm.nextTrigger);
+        if (!alarm.nextTrigger) {
+            console.log('No nextTrigger found, returning early');
+            return;
+        }
         
         const now = new Date();
         const timeDiff = alarm.nextTrigger - now;
+        console.log('Time difference (ms):', timeDiff);
         
         if (timeDiff <= 0) {
             document.getElementById('time-remaining-text').textContent = 'Alarm time has passed';
@@ -324,6 +358,7 @@ class AlarmApp {
             timeText = `${minutes_remaining} minute${minutes_remaining > 1 ? 's' : ''}`;
         }
         
+        console.log('Setting time remaining text:', timeText);
         document.getElementById('time-remaining-text').textContent = timeText;
     }
     
@@ -819,7 +854,10 @@ class AlarmApp {
             this.isVisible = !document.hidden;
             if (this.isVisible) {
                 this.checkAlarms();
-                this.requestWakeLock();
+                // Only request wake lock if we don't already have one
+                if (!this.wakeLock) {
+                    this.requestWakeLock();
+                }
             } else {
                 this.releaseWakeLock();
             }
@@ -829,7 +867,10 @@ class AlarmApp {
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) {
                 this.checkAlarms();
-                this.requestWakeLock();
+                // Only request wake lock if we don't already have one
+                if (!this.wakeLock) {
+                    this.requestWakeLock();
+                }
             }
         });
 
@@ -846,9 +887,15 @@ class AlarmApp {
     
     async requestWakeLock() {
         try {
-            if ('wakeLock' in navigator) {
+            if ('wakeLock' in navigator && !this.wakeLock) {
                 this.wakeLock = await navigator.wakeLock.request('screen');
                 console.log('Wake lock acquired');
+                
+                // Handle wake lock release event
+                this.wakeLock.addEventListener('release', () => {
+                    console.log('Wake lock released by system');
+                    this.wakeLock = null;
+                });
             }
         } catch (err) {
             console.error('Wake lock request failed:', err);

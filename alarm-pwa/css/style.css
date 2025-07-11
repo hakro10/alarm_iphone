@@ -66,12 +66,16 @@ body {
     border: none;
     color: var(--primary-color);
     cursor: pointer;
-    padding: 8px;
+    padding: 12px;
     border-radius: 50%;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .add-alarm-btn:hover {
@@ -80,6 +84,7 @@ body {
 
 .add-alarm-btn:active {
     transform: scale(0.95);
+    background-color: rgba(0, 122, 255, 0.2);
 }
 
 /* Main Content */
