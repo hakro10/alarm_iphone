@@ -1,0 +1,15 @@
+{
+  "name": "alarm-pwa",
+  "version": "1.0.0",
+  "description": "A modern Progressive Web App (PWA) alarm clock inspired by Samsung and iOS alarm designs.",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 8000",
+    "build": "echo 'No build step needed for static site'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
