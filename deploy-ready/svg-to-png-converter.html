@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SVG to PNG Converter for Alarm PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+            text-align: center;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .preview {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .icon-preview {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .current-icons {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Icon Converter for Alarm PWA</h1>
+    
+    <div class="current-icons">
+        <h3>✅ Current SVG Icons (Already Included)</h3>
+        <div class="preview" id="svgPreview"></div>
+        <p><strong>Good news!</strong> Your app already has SVG icons that work in most modern browsers.</p>
+    </div>
+    
+    <div class="status" id="status">
+        <h3>Convert SVG Icons to PNG (Optional)</h3>
+        <p>For maximum compatibility, you can convert the SVG icons to PNG format.</p>
+        <p><strong>Instructions:</strong></p>
+        <ol style="text-align: left; max-width: 600px; margin: 0 auto;">
+            <li>Click "Convert All SVG to PNG" below</li>
+            <li>Each PNG file will be automatically downloaded</li>
+            <li>PNG files provide better compatibility with older devices</li>
+            <li>SVG files will still work as fallbacks</li>
+        </ol>
+    </div>
+    
+    <button onclick="convertAllIcons()">Convert All SVG to PNG</button>
+    <button onclick="showSVGIcons()">Preview Current SVG Icons</button>
+    
+    <div class="preview" id="preview"></div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        async function loadSVG(size) {
+            try {
+                const response = await fetch(`icons/icon-${size}x${size}.svg`);
+                const svgText = await response.text();
+                return svgText;
+            } catch (error) {
+                console.error(`Failed to load SVG for size ${size}:`, error);
+                return null;
+            }
+        }
+        
+        function svgToPng(svgText, size) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    resolve(dataUrl);
+                };
+                
+                const blob = new Blob([svgText], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                img.src = url;
+            });
+        }
+        
+        function downloadPNG(size, dataUrl) {
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        async function convertAllIcons() {
+            const preview = document.getElementById('preview');
+            const status = document.getElementById('status');
+            
+            status.innerHTML = '<p>Converting SVG icons to PNG... Please wait.</p>';
+            preview.innerHTML = '';
+            
+            let completed = 0;
+            
+            for (let i = 0; i < sizes.length; i++) {
+                const size = sizes[i];
+                
+                try {
+                    const svgText = await loadSVG(size);
+                    if (svgText) {
+                        const pngDataUrl = await svgToPng(svgText, size);
+                        
+                        // Create preview
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'icon-preview';
+                        const img = document.createElement('img');
+                        img.src = pngDataUrl;
+                        img.style.width = Math.min(size, 64) + 'px';
+                        img.style.height = Math.min(size, 64) + 'px';
+                        previewDiv.appendChild(img);
+                        previewDiv.appendChild(document.createElement('br'));
+                        previewDiv.appendChild(document.createTextNode(`${size}x${size} PNG`));
+                        preview.appendChild(previewDiv);
+                        
+                        // Download PNG
+                        setTimeout(() => {
+                            downloadPNG(size, pngDataUrl);
+                        }, i * 300);
+                        
+                        completed++;
+                        status.innerHTML = `<p>Converted ${completed} of ${sizes.length} icons...</p>`;
+                    }
+                } catch (error) {
+                    console.error(`Failed to convert icon ${size}x${size}:`, error);
+                }
+            }
+            
+            setTimeout(() => {
+                status.innerHTML = `
+                    <p><strong>✅ Conversion complete!</strong></p>
+                    <p>Downloaded ${completed} PNG files to your downloads folder.</p>
+                    <p>You can now replace the SVG files with PNG files in the icons/ folder if desired.</p>
+                    <p><strong>Note:</strong> Both SVG and PNG files will work. SVG files are smaller and scale better.</p>
+                `;
+            }, sizes.length * 300 + 1000);
+        }
+        
+        async function showSVGIcons() {
+            const svgPreview = document.getElementById('svgPreview');
+            svgPreview.innerHTML = '';
+            
+            for (const size of sizes) {
+                try {
+                    const svgText = await loadSVG(size);
+                    if (svgText) {
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'icon-preview';
+                        
+                        const svgContainer = document.createElement('div');
+                        svgContainer.innerHTML = svgText;
+                        const svgElement = svgContainer.querySelector('svg');
+                        if (svgElement) {
+                            svgElement.style.width = Math.min(size, 64) + 'px';
+                            svgElement.style.height = Math.min(size, 64) + 'px';
+                        }
+                        
+                        previewDiv.appendChild(svgContainer);
+                        previewDiv.appendChild(document.createElement('br'));
+                        previewDiv.appendChild(document.createTextNode(`${size}x${size} SVG`));
+                        svgPreview.appendChild(previewDiv);
+                    }
+                } catch (error) {
+                    console.error(`Failed to load SVG for preview ${size}x${size}:`, error);
+                }
+            }
+        }
+        
+        // Show SVG icons on page load
+        window.addEventListener('load', () => {
+            showSVGIcons();
+        });
+    </script>
+</body>
+</html>

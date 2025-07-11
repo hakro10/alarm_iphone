@@ -1,0 +1,692 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #007AFF;
+    --secondary-color: #34C759;
+    --danger-color: #FF3B30;
+    --warning-color: #FF9500;
+    --background-color: #000000;
+    --surface-color: #1C1C1E;
+    --card-color: #2C2C2E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #99999D;
+    --border-color: #38383A;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --border-radius: 12px;
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+    max-width: 428px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background-color: var(--background-color);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.header-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.add-alarm-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-alarm-btn:hover {
+    background-color: rgba(0, 122, 255, 0.1);
+}
+
+.add-alarm-btn:active {
+    transform: scale(0.95);
+}
+
+/* Main Content */
+.main-content {
+    padding: 20px 24px;
+    min-height: calc(100vh - 100px);
+}
+
+.alarms-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alarm-item {
+    background-color: var(--card-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    position: relative;
+}
+
+.alarm-item:hover {
+    background-color: rgba(44, 44, 46, 0.8);
+}
+
+.alarm-item.active {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 122, 255, 0.1);
+}
+
+.alarm-info {
+    flex: 1;
+}
+
+.alarm-time {
+    font-size: 48px;
+    font-weight: 200;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.alarm-label {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.alarm-schedule {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.alarm-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.alarm-toggle {
+    position: relative;
+    width: 60px;
+    height: 32px;
+    background-color: var(--border-color);
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.alarm-toggle.active {
+    background-color: var(--secondary-color);
+}
+
+.alarm-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    background-color: white;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.alarm-toggle.active::after {
+    transform: translateX(28px);
+}
+
+.alarm-menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.alarm-menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* No Alarms State */
+.no-alarms {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    min-height: 400px;
+}
+
+.no-alarms-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.no-alarms p {
+    font-size: 22px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.no-alarms-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--card-color);
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.modal-close,
+.modal-save {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: var(--transition);
+}
+
+.modal-close {
+    color: var(--text-secondary);
+}
+
+.modal-save {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.modal-close:hover,
+.modal-save:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+/* Time Picker */
+.time-picker-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 32px;
+}
+
+.time-picker {
+    position: relative;
+}
+
+.time-input {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 64px;
+    font-weight: 200;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    outline: none;
+    width: 280px;
+    cursor: pointer;
+}
+
+.time-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+}
+
+/* Alarm Options */
+.alarm-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.option-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.option-item label {
+    font-size: 16px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.text-input,
+.select-input {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.text-input:focus,
+.select-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.select-input {
+    cursor: pointer;
+}
+
+.repeat-days {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.day-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.day-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.day-btn.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Time Remaining Modal */
+.time-remaining-content {
+    padding: 40px 24px;
+    text-align: center;
+}
+
+.time-remaining-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.time-remaining-header h3 {
+    font-size: 18px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.time-remaining-display {
+    margin-bottom: 32px;
+}
+
+.time-remaining-text {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.ok-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.ok-btn:hover {
+    background-color: rgba(0, 122, 255, 0.8);
+}
+
+.ok-btn:active {
+    transform: scale(0.95);
+}
+
+/* Active Alarm Modal */
+.active-alarm-modal {
+    background-color: rgba(0, 0, 0, 0.95);
+}
+
+.active-alarm-content {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: 40px 24px;
+    text-align: center;
+    border: 2px solid var(--primary-color);
+}
+
+.alarm-clock-icon {
+    font-size: 80px;
+    margin-bottom: 24px;
+    animation: pulse 2s infinite;
+}
+
+.active-alarm-time {
+    font-size: 48px;
+    font-weight: 200;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.active-alarm-label {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+.alarm-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.snooze-btn,
+.stop-btn {
+    padding: 16px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    min-width: 100px;
+}
+
+.snooze-btn {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.stop-btn {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.snooze-btn:hover {
+    background-color: rgba(255, 149, 0, 0.8);
+}
+
+.stop-btn:hover {
+    background-color: rgba(255, 59, 48, 0.8);
+}
+
+.snooze-btn:active,
+.stop-btn:active {
+    transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .header {
+        padding: 16px 20px;
+    }
+    
+    .header-title {
+        font-size: 28px;
+    }
+    
+    .main-content {
+        padding: 16px 20px;
+    }
+    
+    .alarm-time {
+        font-size: 40px;
+    }
+    
+    .time-input {
+        font-size: 56px;
+        width: 240px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .alarm-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .snooze-btn,
+    .stop-btn {
+        width: 100%;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: light) {
+    :root {
+        --background-color: #F2F2F7;
+        --surface-color: #FFFFFF;
+        --card-color: #FFFFFF;
+        --text-primary: #000000;
+        --text-secondary: #6D6D70;
+        --border-color: #D1D1D6;
+    }
+    
+    .alarm-toggle::after {
+        background-color: #000000;
+    }
+    
+    .alarm-toggle.active::after {
+        background-color: #FFFFFF;
+    }
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+    .app-container {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .header {
+        padding-top: calc(20px + env(safe-area-inset-top));
+    }
+}
+
+/* iOS PWA specific styles */
+@supports (-webkit-touch-callout: none) {
+    .app-container {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+    
+    .time-input {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .alarm-toggle {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .modal {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent zoom on focus */
+    input, select, textarea {
+        font-size: 16px;
+    }
+    
+    /* iOS specific touch handling */
+    .alarm-item,
+    .add-alarm-btn,
+    .alarm-toggle,
+    .day-btn,
+    .ok-btn,
+    .modal-save,
+    .modal-close {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sound-select-container {
+    display: flex;
+    align-items: center;
+}
+
+.upload-btn {
+    margin-left: 10px;
+    padding: 8px 12px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.upload-btn:hover {
+    background-color: #444;
+}
