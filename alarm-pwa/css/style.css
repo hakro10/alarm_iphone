@@ -617,6 +617,44 @@ body {
     }
 }
 
+/* iOS PWA specific styles */
+@supports (-webkit-touch-callout: none) {
+    .app-container {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+    
+    .time-input {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .alarm-toggle {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .modal {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent zoom on focus */
+    input, select, textarea {
+        font-size: 16px;
+    }
+    
+    /* iOS specific touch handling */
+    .alarm-item,
+    .add-alarm-btn,
+    .alarm-toggle,
+    .day-btn,
+    .ok-btn,
+    .modal-save,
+    .modal-close {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+}
+
 /* Utility classes */
 .hidden {
     display: none !important;

@@ -1,4 +1,9 @@
 {
+    "scope": "/",
+    "screenshots": [],
+    "launch_handler": {
+        "client_mode": "focus-existing"
+    },
     "name": "Alarm App",
     "short_name": "Alarm",
     "description": "A modern alarm app with Samsung and iOS inspired design",

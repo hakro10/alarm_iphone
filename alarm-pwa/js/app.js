@@ -6,6 +6,10 @@ class AlarmApp {
         this.audioContext = null;
         this.currentAlarmAudio = null;
         this.notificationPermission = false;
+        this.audioContextInitialized = false;
+        this.checkAlarmInterval = null;
+        this.wakeLock = null;
+        this.isVisible = true;
         this.sounds = {
             default: this.createBeepSound.bind(this),
             gentle: this.createGentleSound.bind(this),
@@ -17,21 +21,26 @@ class AlarmApp {
     }
     
     async init() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.loadAlarms();
         this.loadCustomSounds();
         await this.requestNotificationPermission();
         await this.registerServiceWorker();
+        this.setupVisibilityHandling();
+        this.setupWakeLock();
         this.renderAlarms();
         this.scheduleAllAlarms();
         this.checkMissedAlarms();
-        setInterval(() => this.checkAlarms(), 1000);
+        this.startAlarmChecking();
         this.setupDayChangeDetection();
         this.setupEventListeners();
+        this.setupServiceWorkerMessages();
     }
     
     setupEventListeners() {
-        document.querySelector('.add-alarm-btn').addEventListener('click', () => this.showModal());
+        document.querySelector('.add-alarm-btn').addEventListener('click', () => {
+            this.initializeAudioContext();
+            this.showModal();
+        });
         document.querySelector('.modal-close').addEventListener('click', () => this.closeModal());
         document.querySelector('.modal-save').addEventListener('click', () => this.saveAlarm());
         document.querySelector('.ok-btn').addEventListener('click', () => this.closeTimeRemainingModal());
@@ -71,9 +80,10 @@ class AlarmApp {
             const alarmId = alarmItem.dataset.id;
 
             if (target.classList.contains('alarm-toggle')) {
+                this.initializeAudioContext();
                 this.toggleAlarm(alarmId);
             } else if (target.classList.contains('alarm-menu-btn')) {
-                this.editAlarm(alarmId);
+                this.showAlarmOptions(alarmId);
             }
         });
     }
@@ -142,7 +152,9 @@ class AlarmApp {
                         <button class="alarm-toggle ${alarm.enabled ? 'active' : ''}"></button>
                         <button class="alarm-menu-btn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 5v14M5 12h14"/>
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
                             </svg>
                         </button>
                     </div>
@@ -446,9 +458,14 @@ class AlarmApp {
             const soundData = localStorage.getItem(`custom_sound_${soundName}`);
             if (soundData) {
                 const audio = new Audio(soundData);
-                audio.play();
+                audio.loop = true;
+                audio.volume = 0.8;
+                audio.play().catch(e => console.error('Audio play failed:', e));
                 this.currentAlarmAudio = {
-                    stop: () => audio.pause()
+                    stop: () => {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
                 };
             } else {
                 // Fallback to default if custom sound not found
@@ -459,11 +476,12 @@ class AlarmApp {
             this.currentAlarmAudio = soundGenerator();
         }
 
+        // Stop alarm after 60 seconds for iOS PWA compatibility
         setTimeout(() => {
             if (this.currentAlarmAudio) {
                 this.currentAlarmAudio.stop();
             }
-        }, 30000);
+        }, 60000);
     }
     
     createBeepSound() {
@@ -631,6 +649,98 @@ class AlarmApp {
         });
     }
     
+    initializeAudioContext() {
+        if (this.audioContextInitialized) return;
+        
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.audioContextInitialized = true;
+        } catch (error) {
+            console.error('AudioContext initialization failed:', error);
+            // Fallback to HTML5 Audio API
+            this.audioContext = null;
+        }
+    }
+    
+    startAlarmChecking() {
+        if (this.checkAlarmInterval) {
+            clearInterval(this.checkAlarmInterval);
+        }
+        
+        // Check every 5 seconds for iOS PWA compatibility
+        this.checkAlarmInterval = setInterval(() => {
+            this.checkAlarms();
+        }, 5000);
+        
+        // Also check when the app becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.checkAlarms();
+            }
+        });
+    }
+    
+    showAlarmOptions(alarmId) {
+        const alarm = this.alarms.find(a => a.id === alarmId);
+        if (!alarm) return;
+        
+        const options = [
+            { text: 'Edit', action: () => this.editAlarm(alarmId) },
+            { text: 'Delete', action: () => this.deleteAlarm(alarmId) },
+            { text: 'Duplicate', action: () => this.duplicateAlarm(alarmId) }
+        ];
+        
+        this.showActionSheet(options);
+    }
+    
+    duplicateAlarm(alarmId) {
+        const alarm = this.alarms.find(a => a.id === alarmId);
+        if (!alarm) return;
+        
+        const duplicatedAlarm = {
+            ...alarm,
+            id: this.generateId(),
+            label: `${alarm.label} (Copy)`,
+            enabled: false,
+            nextTrigger: null,
+            timeoutId: null
+        };
+        
+        this.alarms.push(duplicatedAlarm);
+        this.saveAlarms();
+        this.renderAlarms();
+    }
+    
+    showActionSheet(options) {
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content action-sheet">
+                <div class="action-sheet-options">
+                    ${options.map(option => `
+                        <button class="action-option" data-action="${option.text}">${option.text}</button>
+                    `).join('')}
+                    <button class="action-option action-cancel">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target.classList.contains('action-option')) {
+                const action = e.target.dataset.action;
+                const option = options.find(o => o.text === action);
+                if (option) {
+                    option.action();
+                }
+                document.body.removeChild(modal);
+            } else if (e.target.classList.contains('action-cancel') || e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    }
+    
     setupDayChangeDetection() {
         setInterval(() => {
             const now = new Date();
@@ -669,6 +779,71 @@ class AlarmApp {
         document.getElementById('confirm-no').onclick = () => {
             document.body.removeChild(modal);
         };
+    }
+    
+    // iOS PWA Optimization Methods
+    
+    setupVisibilityHandling() {
+        document.addEventListener('visibilitychange', () => {
+            this.isVisible = !document.hidden;
+            if (this.isVisible) {
+                this.checkAlarms();
+                this.requestWakeLock();
+            } else {
+                this.releaseWakeLock();
+            }
+        });
+
+        // Handle iOS specific events
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                this.checkAlarms();
+                this.requestWakeLock();
+            }
+        });
+
+        window.addEventListener('pagehide', () => {
+            this.releaseWakeLock();
+        });
+    }
+    
+    setupWakeLock() {
+        if ('wakeLock' in navigator) {
+            this.requestWakeLock();
+        }
+    }
+    
+    async requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                this.wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake lock acquired');
+            }
+        } catch (err) {
+            console.error('Wake lock request failed:', err);
+        }
+    }
+    
+    releaseWakeLock() {
+        if (this.wakeLock) {
+            this.wakeLock.release();
+            this.wakeLock = null;
+            console.log('Wake lock released');
+        }
+    }
+    
+    setupServiceWorkerMessages() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data.type === 'sync-alarms') {
+                    this.scheduleAllAlarms();
+                } else if (event.data.type === 'snooze-alarm') {
+                    this.snoozeAlarm();
+                } else if (event.data.type === 'stop-alarm') {
+                    this.stopAlarm();
+                }
+            });
+        }
     }
 }
 
