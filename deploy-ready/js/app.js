@@ -464,8 +464,6 @@ class AlarmApp {
     }
 
     scheduleNotification(alarm) {
-        if (!this.notificationPermission) return;
-
         const delay = alarm.nextTrigger - new Date();
         if (delay <= 0) return;
 
@@ -473,6 +471,7 @@ class AlarmApp {
             clearTimeout(alarm.timeoutId);
         }
 
+        // Always schedule the alarm timeout regardless of notification permission
         alarm.timeoutId = setTimeout(() => {
             this.triggerAlarm(alarm);
         }, delay);
@@ -1023,9 +1022,30 @@ class AlarmApp {
             });
         }
     }
+
+    // Debug method to manually test alarm triggering
+    debugTriggerAlarm() {
+        const testAlarm = {
+            id: 'test-alarm',
+            time: new Date().toTimeString().slice(0, 5),
+            label: 'Test Alarm',
+            sound: 'default',
+            enabled: true,
+            repeatDays: []
+        };
+        
+        this.log('Debug: Manually triggering test alarm');
+        this.triggerAlarm(testAlarm);
+    }
 }
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-    new AlarmApp();
+    const app = new AlarmApp();
+    
+    // Expose debug method to console for testing
+    window.debugTriggerAlarm = () => app.debugTriggerAlarm();
+    window.alarmApp = app;
+    
+    console.log('🚨 Alarm App loaded! Test the alarm popup with: debugTriggerAlarm()');
 });
