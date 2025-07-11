@@ -490,23 +490,37 @@ class AlarmApp {
 
         this.alarms.forEach(alarm => {
             if (alarm.enabled && alarm.nextTrigger && now >= alarm.nextTrigger) {
+                // Don't trigger if there's already an active alarm modal showing
+                const activeModal = document.getElementById('active-alarm-modal');
+                if (activeModal && activeModal.classList.contains('show')) {
+                    return;
+                }
+                
                 this.triggerAlarm(alarm);
             }
         });
     }
 
     triggerAlarm(alarm) {
+        this.log('Triggering alarm:', alarm.label, 'at', new Date().toTimeString());
+        
+        // Clear the current trigger immediately to prevent retriggering
+        alarm.nextTrigger = null;
+        
         this.showActiveAlarmModal(alarm);
         this.playAlarmSound(alarm.sound);
         this.showNotification(alarm);
 
+        // Schedule next occurrence for repeating alarms
         if (alarm.repeatDays && alarm.repeatDays.length > 0) {
             this.scheduleAlarm(alarm);
         } else {
             alarm.enabled = false;
-            this.saveAlarms();
-            this.renderAlarms();
         }
+        
+        // Save the updated alarm state
+        this.saveAlarms();
+        this.renderAlarms();
     }
 
      showActiveAlarmModal(alarm) {
@@ -648,6 +662,10 @@ class AlarmApp {
         document.getElementById('active-alarm-modal').classList.remove('show');
 
         if (this.currentActiveAlarm) {
+            // Cancel any existing scheduled alarms first
+            this.cancelAlarm(this.currentActiveAlarm);
+            
+            // Set up snooze (5 minutes from now)
             const snoozeTime = new Date();
             snoozeTime.setMinutes(snoozeTime.getMinutes() + 5);
             this.currentActiveAlarm.nextTrigger = snoozeTime;
@@ -661,7 +679,12 @@ class AlarmApp {
         }
 
         document.getElementById('active-alarm-modal').classList.remove('show');
-        this.currentActiveAlarm = null;
+        
+        // Cancel any scheduled alarms for the current active alarm
+        if (this.currentActiveAlarm) {
+            this.cancelAlarm(this.currentActiveAlarm);
+            this.currentActiveAlarm = null;
+        }
     }
 
     handleSoundUpload(file) {
